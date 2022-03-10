@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -10,21 +11,25 @@ import (
 )
 
 const (
+	_USER     = "root"
+	_PASSWORD = "root1234"
 
 	// Mongo Connection
-	URI     = "mongodb://localhost:27017"
-	TIMEOUT = 15
+	_URI     = "mongodb://%s:%s@localhost:27017"
+	_TIMEOUT = 15
 
 	//Mongo Parameters
-	DB_NAME = "practica"
+	_DB_NAME = "practica"
 )
 
 // Genera una conexion con la API de Mongo
-func connect(uri string) (*mongo.Client, context.Context, context.CancelFunc, error) {
+func connect() (*mongo.Client, context.Context, context.CancelFunc, error) {
+
+	uri := fmt.Sprintf(_URI, _USER, _PASSWORD)
 
 	ctx, cancel := context.WithTimeout(
 		context.Background(),
-		TIMEOUT*time.Second,
+		_TIMEOUT*time.Second,
 	)
 
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(uri))
@@ -35,7 +40,7 @@ func connect(uri string) (*mongo.Client, context.Context, context.CancelFunc, er
 
 func ObtenerColeccion(nameCollection string) (out [][]byte, err error) {
 
-	client, ctx, cancel, err := connect(URI)
+	client, ctx, cancel, err := connect()
 
 	if err != nil {
 		cancel()
@@ -44,7 +49,7 @@ func ObtenerColeccion(nameCollection string) (out [][]byte, err error) {
 
 	defer client.Disconnect(ctx)
 
-	database := client.Database(DB_NAME)
+	database := client.Database(_DB_NAME)
 	collection := database.Collection(nameCollection)
 
 	cursor, err := collection.Find(ctx, bson.D{})
@@ -73,7 +78,7 @@ func ObtenerColeccion(nameCollection string) (out [][]byte, err error) {
 
 func InsertarDocumento(data interface{}, nameCollection string) error {
 
-	client, ctx, cancel, err := connect(URI)
+	client, ctx, cancel, err := connect()
 
 	if err != nil {
 		cancel()
@@ -82,7 +87,7 @@ func InsertarDocumento(data interface{}, nameCollection string) error {
 
 	defer client.Disconnect(ctx)
 
-	database := client.Database(DB_NAME)
+	database := client.Database(_DB_NAME)
 
 	_, err = database.Collection(nameCollection).InsertOne(ctx, data)
 
